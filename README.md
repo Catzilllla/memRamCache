@@ -1,6 +1,5 @@
 # memRamCache
 
-# Go-memorycache-example
 Менеджер кеша в памяти на Golang, хранилище данных в формате ключ/значение
 
 
