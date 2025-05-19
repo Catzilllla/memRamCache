@@ -14,7 +14,7 @@
 Необходимо импортировать пакет
 
 	import (
-		memorycache "github.com/maxchagin/go-memorycache-example"
+		memorycache "github.com/github.com/Catzilllla/memRamCache"
 	)
 
 Инициализировать кеш
