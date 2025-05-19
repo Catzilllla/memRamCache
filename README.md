@@ -13,7 +13,7 @@
 Необходимо импортировать пакет
 
 	import (
-		memorycache "github.com/github.com/Catzilllla/memRamCache"
+		memramcache "github.com/github.com/Catzilllla/memRamCache"
 	)
 
 Инициализировать кеш
