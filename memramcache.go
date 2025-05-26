@@ -24,20 +24,38 @@ type Cache struct {
 	sync.RWMutex
 	defaultExpiration time.Duration
 	CleanupInterval   time.Duration
-	items             map[string]Item
+	Citems            map[string]Item
+	Counter           int
 }
 
 // инициализация контейнера хранилища
 func NewContainer(defaultExpiration, cleanupInterval time.Duration) *Cache {
 	cache := Cache{
-		items:             Cache.items,
+		Citems:            map[string]Item{},
 		defaultExpiration: defaultExpiration,
 		CleanupInterval:   cleanupInterval,
+		Counter:           0,
 	}
 	if cleanupInterval > 0 {
 		cache.StartGC()
 	}
 	return &cache
+}
+
+// Метод для вывода всех элементов кэша
+func (c *Cache) GetAll() map[string]interface{} {
+	c.RLock()
+	defer c.RUnlock()
+
+	// Создаем новый map для возвращаемых данных
+	result := make(map[string]interface{})
+
+	for key, item := range c.Citems {
+		if item.Expiration == 0 || item.Expiration > time.Now().Unix() {
+			result[key] = item.Value
+		}
+	}
+	return result
 }
 
 func (c *Cache) Set(key string, value interface{}, duration time.Duration) {
@@ -58,7 +76,7 @@ func (c *Cache) Set(key string, value interface{}, duration time.Duration) {
 
 	defer c.Unlock()
 
-	c.items[key] = Item{
+	c.Citems[key] = Item{
 		Value:      value,
 		Expiration: expiration,
 		Created:    time.Now(),
@@ -72,7 +90,7 @@ func (c *Cache) Get(key string) (interface{}, bool) {
 
 	defer c.RUnlock()
 
-	item, found := c.items[key]
+	item, found := c.Citems[key]
 
 	// ключ не найден
 	if !found {
@@ -98,11 +116,11 @@ func (c *Cache) Delete(key string) error {
 
 	defer c.Unlock()
 
-	if _, found := c.items[key]; !found {
+	if _, found := c.Citems[key]; !found {
 		return errors.New("Key not found")
 	}
 
-	delete(c.items, key)
+	delete(c.Citems, key)
 
 	return nil
 }
@@ -117,7 +135,7 @@ func (c *Cache) GC() {
 		// ожидаем время установленное в cleanupInterval
 		<-time.After(c.CleanupInterval)
 
-		if c.items == nil {
+		if c.Citems == nil {
 			return
 		}
 
@@ -138,7 +156,7 @@ func (c *Cache) expiredKeys() (keys []string) {
 
 	defer c.RUnlock()
 
-	for k, i := range c.items {
+	for k, i := range c.Citems {
 		if time.Now().UnixNano() > i.Expiration && i.Expiration > 0 {
 			keys = append(keys, k)
 		}
@@ -155,6 +173,6 @@ func (c *Cache) clearItems(keys []string) {
 	defer c.Unlock()
 
 	for _, k := range keys {
-		delete(c.items, k)
+		delete(c.Citems, k)
 	}
 }
